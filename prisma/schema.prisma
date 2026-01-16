@@ -96,8 +96,8 @@ model Post {
   @@index([category])
   @@index([tags])
   
-  // Full-text search index
-  @@fulltext([title, content, excerpt])
+  // Full-text search index (disabled for current connector)
+  // @@fulltext([title, content, excerpt])
   
   @@map("posts")
 }
