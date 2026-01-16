@@ -95,7 +95,7 @@ export async function POST(request) {
         ...validated,
         slug,
         authorId: token.id,
-        publishedAt: validated.status === "PUBLISHED" ? new Date() : null,
+        publishedAt: validated.status === "published" ? new Date() : null,
       },
       include: {
         author: {

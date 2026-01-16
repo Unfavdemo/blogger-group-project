@@ -13,7 +13,7 @@ export async function PATCH(request) {
     const validated = bulkUpdatePostSchema.parse(body);
 
     // Check ownership of all posts (unless admin)
-    if (token.role !== "ADMIN") {
+    if (token.role !== "admin") {
       const posts = await prisma.post.findMany({
         where: {
           id: { in: validated.posts.map((p) => p.id) },
