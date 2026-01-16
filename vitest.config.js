@@ -1,20 +1,29 @@
-// TODO: Set up Vitest configuration
-// Implement Vitest config with:
-// - Define config using defineConfig
-// - Set test environment (node)
-// - Configure globals
-// - Set up coverage provider and reporters
-// - Configure path aliases (if needed)
+// ✅ Vitest Configuration
+// Test runner configuration for the project
 
-// Stub - replace with actual implementation
-export default {
-  // TODO: Implement Vitest configuration
+import { defineConfig } from 'vitest/config';
+import path from 'path';
+
+export default defineConfig({
   test: {
-    // TODO: Configure test environment
-    // TODO: Enable globals
-    // TODO: Configure coverage
+    globals: true,
+    environment: 'node',
+    setupFiles: ['./tests/setup.js'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      exclude: [
+        'node_modules/',
+        'tests/',
+        '**/*.config.*',
+        '**/dist/',
+        '**/.next/',
+      ],
+    },
   },
   resolve: {
-    // TODO: Configure path aliases if needed
+    alias: {
+      '@': path.resolve(__dirname, './'),
+    },
   },
-};
+});

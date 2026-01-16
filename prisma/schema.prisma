@@ -1,22 +1,10 @@
-// TODO: Part A - Niki (Database Setup Leader)
-// Implement complete Prisma schema with:
-// - Generator configuration for Prisma Client
-// - Datasource configuration for PostgreSQL
-// - UserRole enum (admin, editor, reader)
-// - PostStatus enum (draft, published, archived)
-// - User model with all fields, relations, and indexes
-// - Post model with all fields, relations, and indexes (including full-text search)
-// - Comment model with self-referencing relation for nested replies
-// - Wellness model for privacy-first check-ins
-// - PasswordHistory model for password reuse prevention
-// - AuditLog model for tracking changes
-// - NextAuth models (Account, Session, VerificationToken)
-// - All necessary indexes for performance
-// - All foreign key relations with proper cascade behavior
+// ✅ Complete Prisma Schema
+// By: Niki (Part A - Database Setup Leader)
+// Prisma 7 with PostgreSQL
 
 generator client {
   provider = "prisma-client-js"
-  // TODO: Add previewFeatures for full-text search
+  previewFeatures = ["fullTextSearch", "fullTextIndex"]
 }
 
 datasource db {
@@ -24,19 +12,238 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// TODO: Define UserRole enum
-// enum UserRole { ... }
+// ============================================
+// Enums
+// ============================================
 
-// TODO: Define PostStatus enum  
-// enum PostStatus { ... }
+enum UserRole {
+  admin
+  editor
+  reader
+}
 
-// TODO: Define User model with all required fields and relations
-// model User { ... }
+enum PostStatus {
+  draft
+  published
+  archived
+}
 
-// TODO: Define Post model with all required fields and relations
-// model Post { ... }
+// ============================================
+// User Model
+// ============================================
 
-// TODO: Define Comment model with self-referencing relation
-// model Comment { ... }
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String
+  role          UserRole  @default(reader)
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-// TODO: Define all other models (Wellness, PasswordHistory, AuditLog, NextAuth models, etc.)
+  // Relations
+  posts         Post[]
+  comments      Comment[]
+  wellness      Wellness[]
+  passwordHistory PasswordHistory[]
+  accounts      Account[]
+  sessions      Session[]
+
+  // Indexes
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+// ============================================
+// Post Model
+// ============================================
+
+model Post {
+  id          String      @id @default(cuid())
+  title       String
+  slug        String      @unique
+  content     String      @db.Text
+  excerpt     String?     @db.Text
+  status      PostStatus  @default(draft)
+  publishedAt DateTime?
+  viewCount   Int         @default(0)
+  readingTime Int?        // in minutes
+  category    String?
+  tags        String[]    @default([])
+  
+  // SEO
+  metaTitle       String?
+  metaDescription String?  @db.Text
+  
+  // Author relation
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  // Comments relation
+  comments  Comment[]
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Indexes for performance
+  @@index([authorId])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([slug])
+  @@index([category])
+  @@index([tags])
+  
+  // Full-text search index
+  @@fulltext([title, content, excerpt])
+  
+  @@map("posts")
+}
+
+// ============================================
+// Comment Model (with self-referencing for nested replies)
+// ============================================
+
+model Comment {
+  id        String    @id @default(cuid())
+  content   String    @db.Text
+  postId    String
+  authorId  String
+  
+  // Self-referencing for nested replies
+  parentId String?
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentReplies")
+  
+  // Soft delete
+  deletedAt DateTime?
+  
+  // Relations
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Indexes
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+  @@index([deletedAt])
+  
+  @@map("comments")
+}
+
+// ============================================
+// Wellness Model (privacy-first check-ins)
+// ============================================
+
+model Wellness {
+  id        String   @id @default(cuid())
+  userId    String
+  mood      String?  // e.g., "happy", "sad", "anxious"
+  stress    Int?     // 1-10 scale
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relation
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([userId])
+  @@index([createdAt])
+  
+  @@map("wellness")
+}
+
+// ============================================
+// Password History Model (prevent password reuse)
+// ============================================
+
+model PasswordHistory {
+  id          String   @id @default(cuid())
+  userId      String
+  passwordHash String
+  createdAt   DateTime @default(now())
+
+  // Relation
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([userId])
+  @@index([createdAt])
+  
+  @@map("password_history")
+}
+
+// ============================================
+// Audit Log Model (track changes)
+// ============================================
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String   // e.g., "CREATE_POST", "UPDATE_USER", "DELETE_COMMENT"
+  resource  String   // e.g., "Post", "User", "Comment"
+  resourceId String?
+  details   Json?    // Additional details as JSON
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  // Indexes
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt])
+  
+  @@map("audit_logs")
+}
+
+// ============================================
+// NextAuth Models (for authentication)
+// ============================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}

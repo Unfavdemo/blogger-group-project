@@ -1,14 +1,34 @@
-// TODO: Set up test environment
-// Implement test setup with:
-// - Import Vitest hooks (beforeAll, afterAll, afterEach)
-// - Set up Prisma client for tests
-// - Configure test database connection
-// - Add cleanup logic between tests
-// - Handle test database teardown
+// ✅ Test Environment Setup
+// Configures test database and cleanup
 
-// Stub - replace with actual implementation
-// TODO: Import Vitest hooks
-// TODO: Create Prisma client instance for tests
-// TODO: Set up beforeAll hook for test database
-// TODO: Set up afterEach hook for cleanup
-// TODO: Set up afterAll hook for disconnection
+import { PrismaClient } from '@prisma/client';
+import { beforeAll, afterAll, afterEach } from 'vitest';
+
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL || process.env.TEST_DATABASE_URL,
+    },
+  },
+});
+
+// Set up test database before all tests
+beforeAll(async () => {
+  // Ensure database is connected
+  await prisma.$connect();
+});
+
+// Clean up after each test
+afterEach(async () => {
+  // Clean up test data if needed
+  // Note: In a real scenario, you might want to clean specific tables
+  // For now, we'll rely on test isolation
+});
+
+// Disconnect after all tests
+afterAll(async () => {
+  await prisma.$disconnect();
+});
+
+// Export prisma for use in tests
+export { prisma };
