@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requirePermission } from "@/lib/rbac";
+import { requirePermission, canModifyOwnResource } from "@/lib/rbac";
 import { updatePostSchema } from "@/lib/validations";
 import { prisma } from "@/lib/prisma";
 
@@ -65,8 +65,8 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // Check ownership (unless admin)
-    if (post.authorId !== token.id && token.role !== "ADMIN") {
+    // Check ownership
+    if (!canModifyOwnResource(token.role, post.authorId, token.id)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -78,7 +78,7 @@ export async function PATCH(request, { params }) {
       data: {
         ...validated,
         publishedAt:
-          validated.status === "PUBLISHED" && !post.publishedAt
+          validated.status === "published" && !post.publishedAt
             ? new Date()
             : post.publishedAt,
       },
@@ -123,8 +123,8 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // Check ownership (unless admin)
-    if (post.authorId !== token.id && token.role !== "ADMIN") {
+    // Check ownership
+    if (!canModifyOwnResource(token.role, post.authorId, token.id)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

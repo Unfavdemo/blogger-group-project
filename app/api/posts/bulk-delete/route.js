@@ -19,7 +19,7 @@ export async function DELETE(request) {
     }
 
     // Check ownership of all posts (unless admin)
-    if (token.role !== "ADMIN") {
+    if (token.role !== "admin") {
       const posts = await prisma.post.findMany({
         where: {
           id: { in: postIds },
