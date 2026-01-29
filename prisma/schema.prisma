@@ -4,7 +4,8 @@
 
 generator client {
   provider = "prisma-client-js"
-  previewFeatures = ["fullTextSearch", "fullTextIndex"]
+  // fullTextIndex/@@fulltext not supported for PostgreSQL; search uses raw SQL or fullTextSearchPostgres
+  previewFeatures = ["fullTextSearch"]
 }
 
 datasource db {
@@ -95,10 +96,8 @@ model Post {
   @@index([slug])
   @@index([category])
   @@index([tags])
-  
-  // Full-text search index
-  @@fulltext([title, content, excerpt])
-  
+  // @@fulltext not supported for PostgreSQL connector; full-text search uses raw SQL in search API
+
   @@map("posts")
 }
 

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3000';
@@ -19,7 +19,7 @@ describe('Global Search', () => {
         email: 'testsearch@example.com',
         name: 'Test Search User',
         passwordHash: hashedPassword,
-        role: 'READER',
+        role: 'reader',
       },
     });
     userId = user.id;
@@ -31,7 +31,7 @@ describe('Global Search', () => {
         content: 'This post contains searchable content',
         slug: 'searchable-post',
         authorId: userId,
-        status: 'PUBLISHED',
+        status: 'published',
         publishedAt: new Date(),
       },
     });

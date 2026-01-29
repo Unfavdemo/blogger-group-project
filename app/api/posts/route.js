@@ -90,12 +90,17 @@ export async function POST(request) {
       );
     }
 
+    // Calculate reading time
+    const wordCount = validated.content.split(/\s+/).length;
+    const readingTime = Math.ceil(wordCount / 200);
+
     const post = await prisma.post.create({
       data: {
         ...validated,
         slug,
         authorId: token.id,
-        publishedAt: validated.status === "PUBLISHED" ? new Date() : null,
+        publishedAt: validated.status === "published" ? new Date() : null,
+        readingTime: readingTime || 1, // Minimum 1 minute
       },
       include: {
         author: {

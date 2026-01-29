@@ -40,7 +40,31 @@ export async function GET(request) {
                 email: true,
               },
             },
-            replies: true, // Recursive for deep nesting
+            replies: {
+              include: {
+                author: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                  },
+                },
+                replies: {
+                  include: {
+                    author: {
+                      select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                      },
+                    },
+                    replies: true, // Continue recursion for deep nesting
+                  },
+                  orderBy: { createdAt: "asc" },
+                },
+              },
+              orderBy: { createdAt: "asc" },
+            },
           },
           orderBy: { createdAt: "asc" },
         },

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requirePermission } from "@/lib/rbac";
+import { requirePermission, canModifyOwnResource } from "@/lib/rbac";
 import { updatePostSchema } from "@/lib/validations";
 import { prisma } from "@/lib/prisma";
 
@@ -36,10 +36,17 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // Increment view count
+    // Calculate reading time (average reading speed: 200 words per minute)
+    const wordCount = post.content.split(/\s+/).length;
+    const readingTime = Math.ceil(wordCount / 200);
+
+    // Increment view count and update reading time
     await prisma.post.update({
       where: { id: params.id },
-      data: { viewCount: { increment: 1 } },
+      data: { 
+        viewCount: { increment: 1 },
+        readingTime: readingTime || 1, // Minimum 1 minute
+      },
     });
 
     return NextResponse.json({ post });
@@ -65,8 +72,8 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // Check ownership (unless admin)
-    if (post.authorId !== token.id && token.role !== "ADMIN") {
+    // Check ownership using RBAC helper
+    if (!canModifyOwnResource(token.role, post.authorId, token.id)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -78,7 +85,7 @@ export async function PATCH(request, { params }) {
       data: {
         ...validated,
         publishedAt:
-          validated.status === "PUBLISHED" && !post.publishedAt
+          validated.status === "published" && !post.publishedAt
             ? new Date()
             : post.publishedAt,
       },
@@ -123,8 +130,8 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // Check ownership (unless admin)
-    if (post.authorId !== token.id && token.role !== "ADMIN") {
+    // Check ownership using RBAC helper
+    if (!canModifyOwnResource(token.role, post.authorId, token.id)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

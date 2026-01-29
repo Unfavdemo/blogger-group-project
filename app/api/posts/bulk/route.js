@@ -10,7 +10,8 @@ export async function PATCH(request) {
     if (token instanceof NextResponse) return token;
 
     const body = await request.json();
-    const { posts } = bulkUpdatePostSchema.parse(body);
+    const validated = bulkUpdatePostSchema.parse(body);
+    const { posts } = validated;
 
     // Use transaction for atomic updates
     const results = await prisma.$transaction(

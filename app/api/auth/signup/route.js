@@ -29,7 +29,7 @@ export async function POST(request) {
         email: validated.email,
         name: validated.name,
         passwordHash,
-        role: "READER",
+        role: "reader",
       },
       select: {
         id: true,

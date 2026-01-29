@@ -1,11 +1,8 @@
-// TODO: Part E - Quil (RBAC Tests)
-// Note: These tests require database setup. Once foundation is complete, run:
-// pnpm db:generate && pnpm db:push && pnpm test tests/rbac.test.js
+// Part E - Quil (RBAC Tests)
+// Foundation is complete. Tests use mock users; optional: use real DB via Prisma for integration tests.
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-// TODO: Uncomment when Prisma is set up
-// import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { generateToken } from '../lib/auth.js';
 import {
   hasPermission,
@@ -17,8 +14,6 @@ import {
 } from '../lib/rbac.js';
 import { NextRequest } from 'next/server';
 
-// TODO: Uncomment when Prisma is set up
-// const prisma = new PrismaClient();
 const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3000';
 
 describe('RBAC (Role-Based Access Control)', () => {
@@ -26,42 +21,18 @@ describe('RBAC (Role-Based Access Control)', () => {
   let adminToken, editorToken, readerToken;
 
   beforeAll(async () => {
-    // TODO: Uncomment when Prisma is set up
-    // Create test users
-    // const adminPassword = await bcrypt.hash('Admin123!@#', 12);
-    // const editorPassword = await bcrypt.hash('Editor123!@#', 12);
-    // const readerPassword = await bcrypt.hash('Reader123!@#', 12);
-
-    // Mock users for testing (actual DB setup needed for full tests)
+    // Mock users for unit tests (schema uses lowercase: admin, editor, reader)
     adminUser = { id: 'admin-id', email: 'rbac-admin@test.com', name: 'RBAC Admin', role: 'admin' };
     editorUser = { id: 'editor-id', email: 'rbac-editor@test.com', name: 'RBAC Editor', role: 'editor' };
     readerUser = { id: 'reader-id', email: 'rbac-reader@test.com', name: 'RBAC Reader', role: 'reader' };
 
-    // Generate tokens using mock user data
     adminToken = generateToken(adminUser);
     editorToken = generateToken(editorUser);
     readerToken = generateToken(readerUser);
-
-    // TODO: When Prisma is set up, use actual database:
-    // adminUser = await prisma.user.create({ data: { ... } });
-    // editorUser = await prisma.user.create({ data: { ... } });
-    // readerUser = await prisma.user.create({ data: { ... } });
   });
 
   afterAll(async () => {
-    // TODO: Uncomment when Prisma is set up
-    // await prisma.user.deleteMany({
-    //   where: {
-    //     email: {
-    //       in: [
-    //         'rbac-admin@test.com',
-    //         'rbac-editor@test.com',
-    //         'rbac-reader@test.com',
-    //       ],
-    //     },
-    //   },
-    // });
-    // await prisma.$disconnect();
+    // No DB cleanup when using mocks
   });
 
   describe('hasPermission', () => {

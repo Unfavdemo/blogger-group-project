@@ -48,7 +48,7 @@ export async function GET(request) {
     // Search posts
     if (validated.type === "all" || validated.type === "posts") {
       const where = {
-        status: "PUBLISHED",
+        status: "published",
         OR: [
           { title: { search: validated.query } },
           { content: { search: validated.query } },

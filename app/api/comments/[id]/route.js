@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requirePermission } from "@/lib/rbac";
+import { requirePermission, canModifyOwnResource } from "@/lib/rbac";
 import { updateCommentSchema } from "@/lib/validations";
 import { prisma } from "@/lib/prisma";
 
@@ -17,8 +17,8 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ error: "Comment not found" }, { status: 404 });
     }
 
-    // Check ownership (unless admin)
-    if (comment.authorId !== token.id && token.role !== "ADMIN") {
+    // Check ownership using RBAC helper
+    if (!canModifyOwnResource(token.role, comment.authorId, token.id)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -69,8 +69,8 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: "Comment not found" }, { status: 404 });
     }
 
-    // Check ownership (unless admin)
-    if (comment.authorId !== token.id && token.role !== "ADMIN") {
+    // Check ownership using RBAC helper
+    if (!canModifyOwnResource(token.role, comment.authorId, token.id)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

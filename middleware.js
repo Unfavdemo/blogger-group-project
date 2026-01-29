@@ -6,16 +6,16 @@ export default withAuth(
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
 
-    // Admin routes
+    // Admin routes (schema uses lowercase: admin, editor, reader)
     if (path.startsWith("/admin")) {
-      if (token?.role !== "ADMIN") {
+      if (token?.role !== "admin") {
         return NextResponse.redirect(new URL("/dashboard", req.url));
       }
     }
 
     // Editor routes (posts creation/editing)
     if (path.startsWith("/posts/create") || path.startsWith("/posts/edit")) {
-      if (token?.role === "READER") {
+      if (token?.role === "reader") {
         return NextResponse.redirect(new URL("/posts", req.url));
       }
     }

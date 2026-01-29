@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import {
-  hashPassword,
-  verifyPasswordResetToken,
-  checkPasswordHistory,
-  savePasswordToHistory,
-} from '@/lib/auth';
+import { verifyPasswordResetToken } from '@/lib/auth';
+import { hashPassword, checkPasswordHistory, savePasswordHistory } from '@/lib/password';
 import { resetPasswordSchema } from '@/lib/validations';
 
 export async function POST(req) {
@@ -34,7 +30,7 @@ export async function POST(req) {
       );
     }
 
-    // Check password history
+    // Check password history (returns true if password was used)
     const wasUsed = await checkPasswordHistory(user.id, validated.password);
     if (wasUsed) {
       return NextResponse.json(
@@ -50,8 +46,8 @@ export async function POST(req) {
       data: { passwordHash: hashedPassword },
     });
 
-    // Save to password history
-    await savePasswordToHistory(user.id, validated.password);
+    // Save to password history (pass the hash, not plain password)
+    await savePasswordHistory(user.id, hashedPassword);
 
     return NextResponse.json({
       message: 'Password reset successfully',
